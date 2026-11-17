@@ -1,6 +1,7 @@
 # Thread Metrology (Rust) — Milestone Plan (DRAFT v0)
 
-Status: draft for your corrections. No code written, nothing installed yet.
+Status: the original plan, written 2026-11-07 before any code. Kept as the roadmap; section 0 and the
+open questions are historical. Current state: `docs/PROGRESS.md`. Overview and setup: `README.md`.
 Sources: `reference/prompts/Rust prompt.md`, `PROJECT_BACKGROUND.md`, `DESIGN_GUIDELINES.md`, `DESIGN_REFERENCE.md`, `reference/documents/` (the `reference/` files are local only; see `reference/README.md`).
 
 ## 0. Findings about this machine (checked 2026-11-07)

@@ -17,6 +17,8 @@ A fresh clone has only this file. Ask the project owner for a copy of the folder
 | `project-kit/` | The original copy of the agent/process kit whose files now live at the repo root | nothing; kept to compare against |
 | `archive/` | `pre-public-history.bundle`: git history from before the repo went public (`git clone pre-public-history.bundle old-history`) | — |
 
+The "References and acknowledgements" section of the top-level `README.md` credits this material publicly. Update it when you add something here.
+
 Not stored here: `captures/` (calibration files and frames the app reads at run time),
 `measurements.csv` and `diag_*.png` (app and example output). They stay at the repo root, also
 gitignored, because the code uses those paths.

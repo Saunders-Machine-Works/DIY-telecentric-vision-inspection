@@ -24,7 +24,7 @@ keep them current when they change.
 | Dev server | none (desktop app; `cargo run --release -p app` once it exists) |
 
 Rust lives in `%USERPROFILE%\.cargo\bin`; git and rustc may need PATH refreshed in a new shell.
-Plan: `MILESTONES.md`. Design: `DESIGN_GUIDELINES.md`, `DESIGN_REFERENCE.md`. Hardware lessons: `PROJECT_BACKGROUND.md`.
+Overview, setup and bill of materials: `README.md` (update it when setup, hardware or results change). Progress: `docs/PROGRESS.md`. Plan: `MILESTONES.md`. Design: `DESIGN_GUIDELINES.md`, `DESIGN_REFERENCE.md`. Hardware lessons: `PROJECT_BACKGROUND.md`.
 Reference material (SDK installer, third-party code, vendor PDFs, videos, photos, original prompts) lives in `reference/`, sorted by type and gitignored except `reference/README.md`. Put new material there and never commit it; see that README.
 Each code chunk needs a sub-agent review (speed + quality) >= 8/10; UI work needs a UI + speed review >= 8/10.
 
