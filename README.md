@@ -92,7 +92,7 @@ settings, assembly and alignment.
 
 | Qty | Item |
 |---|---|
-| about 4 kg | Black PETG filament. The printer bed must take a 295 mm part (built on a Bambu H2D). |
+| 1 roll (1 kg) | Black PETG filament. The printer bed must take a 295 mm part (built on a Bambu H2D). |
 | 9 / 16 / 2 | Heat-set inserts: M3 / M4 / 1/4-20 |
 | about 25 | M3 and M4 socket-head screws, M4 set screws and an M3 thumbscrew (exact list in the build note) |
 | 4 | Ø3 × 20 mm steel dowel pins |
@@ -284,4 +284,7 @@ write-up.
 
 ## License
 
-No license has been chosen yet. Until one is added, all rights are reserved.
+MIT. See [`LICENSE`](LICENSE). The CAD files in `hardware/` are covered by the same license.
+
+The projects and documents listed under References are their owners' work under their own terms;
+none of their code or content is included here.
