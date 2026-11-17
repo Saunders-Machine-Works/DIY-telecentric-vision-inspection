@@ -1,4 +1,4 @@
-# Thread Vision
+# SMW Telecentric Vision System
 
 A shop-floor optical comparator for small turned parts. You put a pin or a threaded part between a
 backlight and a telecentric camera, and the software measures its silhouette: diameter, and for
