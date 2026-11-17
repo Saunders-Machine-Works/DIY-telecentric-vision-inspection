@@ -1,0 +1,5 @@
+# Every PR needs a review from a code owner once the ruleset's
+# "Require review from Code Owners" is on. Later lines win; add
+# path-specific owners below as maintainers join, e.g.
+#   /hardware/   @some-maintainer
+*   @alexpinson5
