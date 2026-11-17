@@ -1,0 +1,13 @@
+[package]
+name = "app"
+version.workspace = true
+edition.workspace = true
+description = "Desktop app: live camera view, diameter and thread measurement"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[dependencies]
+metrology-core = { path = "../metrology-core" }
+camera = { path = "../camera" }
+eframe = "0.37.0"

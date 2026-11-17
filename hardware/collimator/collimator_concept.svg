@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 540" width="900" height="540" font-family="Arial" font-size="13">
+<rect width="100%" height="100%" fill="white"/>
+<text x="20" y="26" font-size="16" font-weight="bold">Why the collimator: polished pin seen end-on (light travels left to right toward the lens)</text>
+<text x="100" y="56" font-weight="bold">Diffuse backlight (now)</text>
+<rect x="40" y="75" width="14" height="430" fill="#2a2aff"/>
+<circle cx="230" cy="290" r="40.0" fill="#888" stroke="#222" stroke-width="2"/>
+<rect x="380" y="230" width="16" height="120" fill="#555"/><text x="374" y="372">lens</text>
+<polyline points="54.0,93.3 243.7,252.4 380.0,252.4" fill="none" stroke="#e08000" stroke-width="1.6"/>
+<polyline points="54.0,168.8 238.3,250.9 380.0,250.9" fill="none" stroke="#e08000" stroke-width="1.6"/>
+<polyline points="54.0,218.5 233.5,250.2 380.0,250.2" fill="none" stroke="#e08000" stroke-width="1.6"/>
+<text x="110" y="440" fill="#a05000">Rays from the panel reflect off the</text>
+<text x="110" y="458" fill="#a05000">outer rim straight into the lens: a bright</text>
+<text x="110" y="476" fill="#a05000">rim eats into the dark silhouette.</text>
+<text x="550" y="56" font-weight="bold">Collimated backlight (louvre)</text>
+<rect x="490" y="75" width="14" height="430" fill="#2a2aff"/>
+<rect x="504" y="121" width="48" height="2" fill="#222"/>
+<rect x="504" y="142" width="48" height="2" fill="#222"/>
+<rect x="504" y="163" width="48" height="2" fill="#222"/>
+<rect x="504" y="184" width="48" height="2" fill="#222"/>
+<rect x="504" y="205" width="48" height="2" fill="#222"/>
+<rect x="504" y="226" width="48" height="2" fill="#222"/>
+<rect x="504" y="247" width="48" height="2" fill="#222"/>
+<rect x="504" y="268" width="48" height="2" fill="#222"/>
+<rect x="504" y="289" width="48" height="2" fill="#222"/>
+<rect x="504" y="310" width="48" height="2" fill="#222"/>
+<rect x="504" y="331" width="48" height="2" fill="#222"/>
+<rect x="504" y="352" width="48" height="2" fill="#222"/>
+<rect x="504" y="373" width="48" height="2" fill="#222"/>
+<rect x="504" y="394" width="48" height="2" fill="#222"/>
+<rect x="504" y="415" width="48" height="2" fill="#222"/>
+<rect x="504" y="436" width="48" height="2" fill="#222"/>
+<rect x="504" y="457" width="48" height="2" fill="#222"/>
+<circle cx="680" cy="290" r="40.0" fill="#888" stroke="#222" stroke-width="2"/>
+<rect x="830" y="230" width="16" height="120" fill="#555"/><text x="824" y="372">lens</text>
+<line x1="552" y1="245" x2="830.0" y2="245" stroke="#2a2aff" stroke-width="1.4"/>
+<line x1="830.0" y1="245" x2="830" y2="245" stroke="#2a2aff" stroke-width="1.4"/>
+<line x1="552" y1="260" x2="653.5" y2="260" stroke="#2a2aff" stroke-width="1.4"/>
+<line x1="552" y1="275" x2="642.9" y2="275" stroke="#2a2aff" stroke-width="1.4"/>
+<line x1="552" y1="290" x2="640.0" y2="290" stroke="#2a2aff" stroke-width="1.4"/>
+<line x1="552" y1="305" x2="642.9" y2="305" stroke="#2a2aff" stroke-width="1.4"/>
+<line x1="552" y1="320" x2="653.5" y2="320" stroke="#2a2aff" stroke-width="1.4"/>
+<line x1="552" y1="335" x2="830.0" y2="335" stroke="#2a2aff" stroke-width="1.4"/>
+<line x1="830.0" y1="335" x2="830" y2="335" stroke="#2a2aff" stroke-width="1.4"/>
+<text x="560" y="440" fill="#003">Rays all run parallel to the lens axis: only the</text>
+<text x="560" y="458" fill="#003">true tangent ray passes, so the silhouette</text>
+<text x="560" y="476" fill="#003">edge is the real edge of the pin.</text>
+</svg>

@@ -1,0 +1,8 @@
+﻿[package]
+name = "metrology-core"
+version.workspace = true
+edition.workspace = true
+description = "UI- and camera-independent thread metrology core"
+
+[lints.rust]
+unsafe_code = "forbid"

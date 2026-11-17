@@ -1,0 +1,65 @@
+diff --git a/crates/metrology-core/src/profile.rs b/crates/metrology-core/src/profile.rs
+index e8cde48..b4cd8fa 100644
+--- a/crates/metrology-core/src/profile.rs
++++ b/crates/metrology-core/src/profile.rs
+@@ -232,6 +232,24 @@ fn spline_value(y: &[f64], m: &[f64], k: usize, t: f64) -> f64 {
+     a * y[k] + b * y[k + 1] + ((a * a * a - a) * m[k] + (b * b * b - b) * m[k + 1]) / 6.0
+ }
+ 
++/// Samples a local bright or dark neighbourhood needs to set its own level.
++const LOCAL_MIN_SAMPLES: usize = 16;
++
++/// The crossing of `level` nearest to sample `i`, searching up to 3 samples either side for the
++/// pair that straddles it; `fallback` (the line's global level) if the local level is not
++/// crossed there.
++fn refine_crossing_near(v: &[f64], i: usize, level: f64, fallback: f64) -> f64 {
++    let crossed = |k: usize, lv: f64| k + 1 < v.len() && ((v[k] >= lv) != (v[k + 1] >= lv));
++    let found = (0..=3usize)
++        .flat_map(|d| [i.checked_sub(d), Some(i + d)])
++        .flatten()
++        .find(|&k| crossed(k, level));
++    match found {
++        Some(k) => refine_crossing(v, k, level),
++        None => refine_crossing(v, i, fallback),
++    }
++}
++
+ /// Where the profile crosses `level` between samples `i` and `i + 1`, refined on the natural
+ /// cubic spline through the samples within `CROSSING_WINDOW` of the crossing. A spline through
+ /// many samples (not a cubic through four) keeps the phase error of the crossing below 0.005 px
+@@ -302,9 +320,33 @@ pub fn silhouette_edges(values: &[f64]) -> Option<(f64, f64)> {
+         .iter()
+         .rev()
+         .find(|&&(i, rising)| rising && mean_over(i as isize - s, i as isize - g) < dark_limit)?;
++    // Each edge is located at 50 % between ITS OWN bright and dark neighbourhoods, so a slow
++    // brightness gradient across the field (a tunnel or light edge beside the part) cannot move
++    // the two edges by different amounts.
++    let local_level = |i: usize, bright_side: (isize, isize), dark_side: (isize, isize)| {
++        let median_of = |(lo, hi): (isize, isize)| -> Option<f64> {
++            let (lo, hi) = (
++                lo.clamp(0, n as isize) as usize,
++                hi.clamp(0, n as isize) as usize,
++            );
++            (hi >= lo + LOCAL_MIN_SAMPLES).then(|| {
++                let mut v = values[lo..hi].to_vec();
++                v.sort_by(f64::total_cmp);
++                v[v.len() / 2]
++            })
++        };
++        let _ = i;
++        match (median_of(bright_side), median_of(dark_side)) {
++            (Some(b), Some(d)) if b - d > 0.5 * (bright - dark) => 0.5 * (b + d),
++            _ => level,
++        }
++    };
++    let (li, ri) = (left.0 as isize, right.0 as isize);
++    let left_level = local_level(left.0, (li - s, li - g), (li + g, li + s));
++    let right_level = local_level(right.0, (ri + g, ri + s), (ri - s, ri - g));
+     let (l, r) = (
+-        refine_crossing(values, left.0, level),
+-        refine_crossing(values, right.0, level),
++        refine_crossing_near(values, left.0, left_level, level),
++        refine_crossing_near(values, right.0, right_level, level),
+     );
+     (r > l + 2.0 * SILHOUETTE_GAP as f64).then_some((l, r))
+ }

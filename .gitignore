@@ -1,0 +1,16 @@
+/target
+
+# Reference material: everything here stays local except the README (see reference/README.md)
+/reference/*
+!/reference/README.md
+
+.env
+.env.*
+!.env.example
+
+# Runtime data and output written by the app and the camera examples
+captures/
+measurements.csv
+*.pgm
+diag_*.png
+probe_*.png

@@ -1,0 +1,13 @@
+﻿[package]
+name = "camera"
+version.workspace = true
+edition.workspace = true
+description = "Camera abstraction: Pylon (Basler GigE), mock, and retry/averaging helpers"
+build = "build.rs"
+
+[lints.rust]
+unsafe_code = "deny"
+
+[dev-dependencies]
+metrology-core = { path = "../metrology-core" }
+
