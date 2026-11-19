@@ -113,13 +113,14 @@ Every feature, fix, or behavior change ships with tests that exercise it.
   tool or model, no "Generated with" line, no 🤖. If your tool adds one by
   default, remove it. The `commit-msg` hook rejects them.
 - **GIT-2** — Commit and push are separate steps; push only when the user
-  asks. A push to `main`, `master`, or a production branch needs a yes for
-  that branch specifically, even when the user asked you to push: show what's
-  going out, offer a feature branch and PR instead, and wait. Once they've said
-  direct pushes are fine, that holds for the rest of the session.
+  asks, and only the working branch. Never push to `main`; changes reach it
+  only through a merged PR.
 - **GIT-3** — Messages say what changed and why, not "update" or "fix".
-- **GIT-4** — Solo greenfield can work on `main`. Brownfield, production, or
-  shared repos use feature branches and PRs. When unsure, ask.
+- **GIT-4** — No work happens on `main`: no edits, commits, or merges there.
+  All work goes on a feature branch or the user's own branch (e.g.
+  `alex-dev`) and reaches `main` through a PR. Before editing anything, check
+  the branch; if it's `main`, stop and ask which branch to use (offer the
+  user's own branch or a new feature branch) before changing files.
 - **GIT-5** — Past roughly 10 changed files or 400 added lines since the last
   commit, checkpoint: commit, update `docs/PROGRESS.md` (done, in flight, next
   step, open questions), and continue in a fresh session that starts from that

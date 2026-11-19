@@ -11,6 +11,14 @@ pushing can trigger CI, deploys, and public visibility, so it's a separate,
 deliberate step (`/jgl-push`, GIT-2). If the user said "commit and push",
 commit, then tell them pushing is `/jgl-push` and do it only if they confirm.
 
+## Check the branch
+
+Run `git branch --show-current`. If it's `main` (or `master`), don't commit:
+no work happens on `main` (GIT-4). Tell the user and ask which branch to
+move the changes to — their own branch (e.g. `alex-dev`) or a new feature
+branch — then `git switch` (or `git switch -c`) to it, carrying the
+uncommitted changes, and commit there.
+
 ## Stage
 
 Look at `git status` and `git diff` so you know what's being committed. If
