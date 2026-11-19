@@ -1,7 +1,9 @@
 # Contributing
 
 Thanks for helping. Fork the repo, make your change on a branch in your fork,
-and open a pull request against `main`. Direct pushes to `main` are blocked.
+and open a pull request against `main`. Nobody works on `main` directly: all
+work happens on a feature branch or your own branch (e.g. `alex-dev`), and
+reaches `main` only through a reviewed PR. Direct pushes to `main` are blocked.
 
 ## Setup
 

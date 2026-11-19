@@ -1,6 +1,6 @@
 ---
 name: jgl-push
-description: Pushes committed work to the remote, asking first before any push to main, master, or a production branch, and never forcing or skipping hooks. Use when the user says "push", "/jgl-push", or "send it up".
+description: Pushes the working branch to the remote, refusing any push to main, and never forcing or skipping hooks. Use when the user says "push", "/jgl-push", or "send it up".
 disable-model-invocation: true
 ---
 
@@ -18,19 +18,21 @@ there's no upstream). If nothing is ahead, say so and stop.
 
 ## Branch rules
 
-- **Feature branch** (anything but `main`, `master`, `production`, `release`):
-  push. Use `git push -u origin <branch>` the first time.
-- **`main`, `master`, or a production branch:** ask first and wait for a clear
-  yes. Silence or ambiguity is a no. Offer the safer path in the same message:
+- **Feature branch or the user's own branch** (e.g. `alex-dev`; anything but
+  `main`, `master`, `production`, `release`): push. Use
+  `git push -u origin <branch>` the first time.
+- **`main`, `master`, or a production branch:** don't push. No work happens
+  on `main` (GIT-4); it changes only through a merged PR. Tell the user and
+  offer to move the commits to a working branch instead:
 
   ```
-  You're about to push 3 commits to origin/main.
-  If this is a production app, the safer flow is a feature branch and a PR:
-      git checkout -b <feature-branch> && git push -u origin <feature-branch>
-  Push directly to main? (yes/no)
+  You have 3 commits on main. Work doesn't go on main in this repo.
+  Move them to a branch and open a PR:
+      git switch -c <branch>   # or switch to your own branch, e.g. alex-dev
+      git push -u origin <branch>
   ```
 
-  A yes covers the rest of this session only; ask again next session.
+  Don't reset `main` to drop the commits without the user's yes.
 
 ## Pushing
 
