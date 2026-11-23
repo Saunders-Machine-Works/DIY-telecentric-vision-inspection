@@ -5,7 +5,20 @@ mod log;
 mod settings;
 mod worker;
 
+use std::path::Path;
+
 fn main() -> eframe::Result {
+    // Relative paths (captures/calibration.txt, measurements.csv) follow the working directory,
+    // which is the exe's own folder when it is double-clicked. Unless the launch folder already
+    // holds captures/ (a shortcut's "Start in"), work from the exe's data folder instead.
+    let launched_in_data = Path::new("captures").is_dir();
+    if let Some(root) = std::env::current_exe()
+        .ok()
+        .filter(|_| !launched_in_data)
+        .and_then(|exe| exe.parent().and_then(data_root).map(Path::to_path_buf))
+    {
+        let _ = std::env::set_current_dir(root);
+    }
     let options = eframe::NativeOptions {
         viewport: eframe::egui::ViewportBuilder::default()
             .with_inner_size([1500.0, 900.0])
@@ -17,4 +30,55 @@ fn main() -> eframe::Result {
         options,
         Box::new(|cc| Ok(Box::new(app::App::new(cc)))),
     )
+}
+
+/// The nearest of the exe's folder and its two parents that holds `captures/`: the repository
+/// for a built `target\release\app.exe`, or the exe's own folder when shipped beside its data.
+/// `None` leaves the working directory as launched.
+fn data_root(exe_dir: &Path) -> Option<&Path> {
+    exe_dir
+        .ancestors()
+        .take(3)
+        .find(|d| d.join("captures").is_dir())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn temp_tree(name: &str, dirs: &[&str]) -> std::path::PathBuf {
+        let root = std::env::temp_dir().join(format!("tv_root_{name}_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        for d in dirs {
+            std::fs::create_dir_all(root.join(d)).unwrap();
+        }
+        root
+    }
+
+    #[test]
+    fn built_exe_uses_the_repository_captures() {
+        let root = temp_tree("repo", &["captures", "target/release"]);
+        let exe_dir = root.join("target").join("release");
+        assert_eq!(data_root(&exe_dir), Some(root.as_path()));
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn shipped_exe_prefers_its_own_captures() {
+        let root = temp_tree("shipped", &["captures", "app/captures"]);
+        let exe_dir = root.join("app");
+        assert_eq!(data_root(&exe_dir), Some(exe_dir.as_path()));
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn no_captures_nearby_keeps_the_launch_folder() {
+        let root = temp_tree("none", &["a/captures", "a/b/c/d"]);
+        // a/captures is three folders above d; only d and its two parents are searched.
+        assert_eq!(
+            data_root(&root.join("a").join("b").join("c").join("d")),
+            None
+        );
+        std::fs::remove_dir_all(&root).unwrap();
+    }
 }
