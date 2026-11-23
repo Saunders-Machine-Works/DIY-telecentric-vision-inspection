@@ -117,6 +117,16 @@ collimator. **Don't use it:** the telecentric lens images its cell walls sharply
    `PYLON_DEV_DIR`.
 3. **Git**.
 
+**macOS** (Apple silicon or Intel): Rust via rustup, the Xcode command-line tools
+(`xcode-select --install`), and **pylon for macOS** (installs `pylon.framework` in
+`/Library/Frameworks`; set `PYLON_FRAMEWORK_DIR` if it is elsewhere). pylon for macOS has no C
+API, so the build compiles `crates/camera/shim/pylon_c_shim.cpp`, which provides the PylonC
+functions the binding uses on top of the pylon C++ API. `.cargo/config.toml` adds the rpath the
+framework needs. Tested with pylon 12.2.1 (macOS) on an M-series MacBook Pro.
+**Activate the pylon GigE Accelerator** (open `/Applications/pylon GigE Accelerator.app` and
+approve the system extension in System Settings). Without it, most frames arrive incomplete over a
+USB Ethernet adapter and the live view stays black.
+
 Optional, only to regenerate generated files:
 - Python with numpy + scipy for `tools/ref/gen_golden.py` (test reference values)
 - CadQuery for `tools/hw/gen_tunnel.py` (tunnel CAD)
@@ -163,12 +173,16 @@ point it at another file in the inspector.
 .\run_app.ps1
 ```
 
-The script adds the pylon runtime to `PATH`, builds the release app and starts it.
+The script adds the pylon runtime to `PATH`, builds the release app and starts it. On macOS run
+`./run_app.sh` instead. For a double-clickable launcher with an icon, run
+`tools/mac/make_launcher.sh` once; it puts **Thread Vision.app** in `~/Applications` (drag it to
+the Dock). It starts the release build in this folder, so rebuild with `./run_app.sh` after pulling.
 
-- **Connect**, then **Live** to see the camera. Drag to pan and scroll to zoom. Right-drag draws
-  the scan window around the part.
-- Choose **Diameter** or **Thread** mode. Enter the nominal size and tolerance, or pick a thread
-  size; its 2A limits fill in and can be edited.
+- **Connect**, then **Live** to see the camera. Drag to draw the scan window around the part;
+  right-drag (or middle-drag) pans and scroll zooms.
+- Choose **Diameter** or **Thread** mode. In Diameter mode, tick **Apply tolerance** to get
+  PASS / FAIL against a nominal and tolerance; it is off by default (reading only) and the choice
+  is remembered. In Thread mode pick a thread size; its 2A limits fill in and can be edited.
 - **Measure** (or press **M**) captures 8 frames and shows the result and verdict.
 - Each measurement is added to `measurements.csv` in the working folder.
 
@@ -218,7 +232,8 @@ hardware/          CAD: rig_v2 (printed body), tunnel, collimator (abandoned)
 tools/             Python generators: test reference values, tunnel and collimator CAD
 docs/              Progress log, design briefs, third-party software review, experiments
 reference/         Local-only source material (only its README is in git)
-run_app.ps1        Build and start the app with pylon on PATH
+run_app.ps1        Build and start the app with pylon on PATH (Windows)
+run_app.sh         Build and start the app (macOS)
 ```
 
 ## Documentation

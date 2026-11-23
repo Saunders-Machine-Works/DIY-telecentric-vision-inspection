@@ -187,8 +187,30 @@ Setup: reticle calibration 30.1346 um/px (re-fit live later: 30.142). Reticle ce
 - Scan rows must lie inside the map's region: the old map starts at y 851, so rows 751-1101 left the top rows unmapped (use e.g. 900-1250).
 - Calibration files and captures are gitignored: carry `captures/calibration.txt` to any new machine by hand. The optics have not moved since 2026-11-07.
 
-### Next: macOS port (planned)
-- Goal: run the app on the user's MacBook Pro, where pylon for macOS is installed and the camera already works (from the August prototype). The Mac has none of this code yet.
-- The only Windows-specific part is the camera binding: `crates/camera/src/pylon.rs` (PylonC, `FILENAME_MAX` = 260 is the MSVC value, layout asserts for Windows x64) and `crates/camera/build.rs` (Windows lib path, `PylonC_v8_0`). Everything else (metrology-core, egui app) is portable.
-- First step on the Mac: check whether the installed pylon ships the C API (pylon.framework headers/libs for PylonC). Basler documents the C API for Windows and Linux only, the C++ API for macOS. If PylonC is there: cfg-gate `FILENAME_MAX` (1024 on macOS) and the link lines in build.rs. If not: a small C++ shim over the pylon C++ API exposing the same functions, or Aravis.
-- Also needed on the Mac: Xcode command-line tools, rustup; GigE needs a wired Ethernet adapter and camera power (PoE injector if the PC's NIC powered it).
+### macOS port (2026-11-23) - camera and app run on the MacBook Pro
+- pylon for macOS (12.2.1, `/Library/Frameworks/pylon.framework`, from the August prototype) has no PylonC, only the C++ API.
+  New `crates/camera/shim/pylon_c_shim.cpp` implements the ~30 PylonC functions `pylon.rs` calls on the C++ low-level API
+  (IPylonDevice, IStreamGrabber, WaitObject, GenApi node maps); C++ exceptions become a non-zero code plus the message
+  from GenApiGetLastErrorMessage. Structs mirror pylon.rs with static_asserts (96-byte grab result, enum values).
+  `build.rs` compiles it with `xcrun clang++` (no new crate dependency) and links pylon.framework + libc++;
+  `.cargo/config.toml` adds the `/Library/Frameworks` rpath (the framework's install name is @rpath). `pylon.rs` is
+  unchanged except the Windows-only `#[link]` attribute (build.rs links on both platforms). Start with `./run_app.sh`.
+- Live camera (same acA2440-20gm on a USB/Thunderbolt Ethernet adapter, link-local 169.254.x): same factory ROI
+  2448x2048 at (8,4), exposure 3000 us, gain 0; single grab 52 ms, 8-frame burst 382 ms (same as the PC). The
+  first single grab after open failed once with status 4 / 0xE1000014 (transient; grab_mean retries these).
+  The busy-camera retry works: a second process waited 5.5 s and opened.
+- LIVE VIEW WAS BLACK at first: ~9 in 10 frames arrived incomplete (status 4, 0xE1000014 "buffer was incompletely
+  grabbed"). pylon was on its socket driver, whose buffer macOS caps at 64 KB, behind a USB AX88179B adapter. An
+  inter-packet delay fixed it at a cost (GevSCPD 3000: 20/20, burst 1.14 s; 5000: 1.61 s). The real fix was activating
+  the pylon GigE Accelerator system extension (open the app, approve in System Settings): stream type GigEAccelerator,
+  GevSCPD 0, 30/30 live grabs, 8-frame mean 0.43 s. No code change needed.
+- 199 tests, clippy -D warnings, fmt pass on macOS.
+- App changes the same day: left-drag draws the scan window (right/middle-drag pans); "Apply tolerance" checkbox in
+  Diameter mode, off by default and saved (off: reading only, CSV verdict NO TOLERANCE). Launcher:
+  `tools/mac/make_launcher.sh` builds ~/Applications/Thread Vision.app.
+- Mac check, 6 mm pin (rows 900-1250, old map): 0.23630 in = 6.0020 mm (+0.00008 in vs nominal), sd < 0.00001 in over
+  4 bursts. Certified size not given. Release app launches with no stderr.
+- Calibration: the old PC map copied by hand to `captures/calibration.txt` (and `calibration_oldpc.txt`).
+- Not yet done on the Mac: re-check a certified pin with the old map (the optics were carried over, so confirm the
+  calibration still holds before trusting readings); measure jumbo frames on the Mac adapter; the Windows build was not
+  re-run after the build.rs change.

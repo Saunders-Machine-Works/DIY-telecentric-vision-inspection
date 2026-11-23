@@ -73,6 +73,7 @@ pub struct App {
     zoom: f32,
     pan: Vec2,
     fit_view: bool,
+    apply_tolerance: bool,
     nominal_in: f64,
     plus_in: f64,
     minus_in: f64,
@@ -127,6 +128,7 @@ impl App {
             zoom: 0.3,
             pan: Vec2::ZERO,
             fit_view: true,
+            apply_tolerance: saved.apply_tolerance,
             nominal_in: saved.nominal_in,
             plus_in: saved.plus_in,
             minus_in: saved.minus_in,
@@ -156,6 +158,7 @@ impl App {
             guard_in: self.guard_in,
             thread_size: self.catalog[self.chosen].name.clone(),
             thread_mode: self.mode == Mode::Thread,
+            apply_tolerance: self.apply_tolerance,
         }
     }
 
@@ -308,14 +311,10 @@ impl App {
             Outcome::Diameter(Ok(d)) => {
                 let trouble = assess_diameter(d);
                 let inches = d.diameter_mm / MM_PER_IN;
-                let verdict = if !trouble.is_empty() {
-                    "NO VERDICT".to_string()
-                } else {
-                    match Spec::new(self.nominal_in, self.plus_in, self.minus_in) {
-                        Some(s) => format!("{:?}", s.verdict(inches, self.guard_in)).to_uppercase(),
-                        None => "NO VERDICT".to_string(),
-                    }
-                };
+                let spec = self
+                    .apply_tolerance
+                    .then(|| Spec::new(self.nominal_in, self.plus_in, self.minus_in));
+                let verdict = diameter_log_verdict(trouble.is_empty(), spec, inches, self.guard_in);
                 let notes = trouble
                     .iter()
                     .map(ToString::to_string)
@@ -405,7 +404,9 @@ impl App {
             self.pan = Vec2::ZERO;
             self.fit_view = false;
         }
-        if resp.dragged_by(egui::PointerButton::Primary) {
+        if resp.dragged_by(egui::PointerButton::Secondary)
+            || resp.dragged_by(egui::PointerButton::Middle)
+        {
             self.pan += resp.drag_delta();
         }
         if resp.hovered() {
@@ -423,11 +424,11 @@ impl App {
             }
         }
         let origin = rect.center() + self.pan - Vec2::new(w, h) * 0.5 * self.zoom;
-        // right-drag draws the scan window
-        if resp.dragged_by(egui::PointerButton::Secondary) {
+        // left-drag draws the scan window
+        if resp.dragged_by(egui::PointerButton::Primary) {
             if let Some(p) = resp.interact_pointer_pos() {
                 let img = ((p - origin) / self.zoom).clamp(Vec2::ZERO, Vec2::new(w, h));
-                if resp.drag_started_by(egui::PointerButton::Secondary) {
+                if resp.drag_started_by(egui::PointerButton::Primary) {
                     self.roi_anchor = Some(img);
                 }
                 if let Some(a) = self.roi_anchor {
@@ -450,7 +451,7 @@ impl App {
         painter.text(
             rect.left_bottom() + Vec2::new(8.0, -8.0),
             egui::Align2::LEFT_BOTTOM,
-            "right-drag: scan window    wheel: zoom    drag: pan    double-click: fit",
+            "drag: scan window    right-drag: pan    wheel: zoom    double-click: fit",
             egui::FontId::proportional(12.0),
             Color32::from_gray(150),
         );
@@ -549,18 +550,8 @@ impl App {
     }
 
     fn diameter_panel(&mut self, ui: &mut egui::Ui) {
-        ui.strong("Tolerance (inches)");
-        egui::Grid::new("spec").show(ui, |ui| {
-            let field = |ui: &mut egui::Ui, label: &str, v: &mut f64| {
-                ui.label(label);
-                ui.add(egui::DragValue::new(v).speed(0.0001).fixed_decimals(4));
-                ui.end_row();
-            };
-            field(ui, "nominal", &mut self.nominal_in);
-            field(ui, "+ upper", &mut self.plus_in);
-            field(ui, "- lower", &mut self.minus_in);
-            field(ui, "guard band", &mut self.guard_in);
-        });
+        ui.checkbox(&mut self.apply_tolerance, "Apply tolerance (PASS / FAIL)");
+        ui.add_enabled_ui(self.apply_tolerance, |ui| self.tolerance_fields(ui));
         ui.separator();
         if !self.current_result(ui, "Put the part in the light and press Measure.") {
             return;
@@ -568,7 +559,9 @@ impl App {
         let Some(m) = &self.last else { return };
         match &m.outcome {
             Outcome::Diameter(Ok(d)) => {
-                let spec = Spec::new(self.nominal_in, self.plus_in, self.minus_in);
+                let spec = self
+                    .apply_tolerance
+                    .then(|| Spec::new(self.nominal_in, self.plus_in, self.minus_in));
                 let secs = (m.grab + m.compute).as_secs_f64();
                 let mut show_anyway = self.show_untrusted;
                 show_diameter(ui, d, spec, self.guard_in, secs, &mut show_anyway);
@@ -581,6 +574,21 @@ impl App {
             }
             Outcome::Thread(_) => {}
         }
+    }
+
+    fn tolerance_fields(&mut self, ui: &mut egui::Ui) {
+        ui.strong("Tolerance (inches)");
+        egui::Grid::new("spec").show(ui, |ui| {
+            let field = |ui: &mut egui::Ui, label: &str, v: &mut f64| {
+                ui.label(label);
+                ui.add(egui::DragValue::new(v).speed(0.0001).fixed_decimals(4));
+                ui.end_row();
+            };
+            field(ui, "nominal", &mut self.nominal_in);
+            field(ui, "+ upper", &mut self.plus_in);
+            field(ui, "- lower", &mut self.minus_in);
+            field(ui, "guard band", &mut self.guard_in);
+        });
     }
 
     fn thread_panel(&mut self, ui: &mut egui::Ui) {
@@ -666,10 +674,27 @@ fn verdict_chip(ui: &mut egui::Ui, v: Verdict) {
     }
 }
 
+/// The verdict written to `measurements.csv` for a diameter. `spec` is None when the
+/// tolerance is switched off, Some(None) when it is on but not valid.
+fn diameter_log_verdict(
+    trusted: bool,
+    spec: Option<Option<Spec>>,
+    inches: f64,
+    guard_in: f64,
+) -> String {
+    match (trusted, spec) {
+        (false, _) => "NO VERDICT".into(),
+        (true, None) => "NO TOLERANCE".into(),
+        (true, Some(None)) => "NO VERDICT".into(),
+        (true, Some(Some(s))) => format!("{:?}", s.verdict(inches, guard_in)).to_uppercase(),
+    }
+}
+
 fn show_diameter(
     ui: &mut egui::Ui,
     d: &Diameter,
-    spec: Option<Spec>,
+    // None: tolerance off (reading only); Some(None): tolerance on but not valid
+    spec: Option<Option<Spec>>,
     guard_in: f64,
     secs: f64,
     show_anyway: &mut bool,
@@ -680,7 +705,8 @@ fn show_diameter(
         ui.label(RichText::new(format!("{inches:.5} in")).size(40.0).strong());
         ui.label(format!("{:.4} mm", d.diameter_mm));
         match spec {
-            Some(spec) => {
+            None => {}
+            Some(Some(spec)) => {
                 verdict_chip(ui, spec.verdict(inches, guard_in));
                 let dev = spec.deviation(inches);
                 let arrow = if dev >= 0.0 { "▲" } else { "▼" };
@@ -690,7 +716,7 @@ fn show_diameter(
                     dev * MM_PER_IN * 1000.0
                 ));
             }
-            None => big_chip(ui, "TOLERANCE NOT VALID", GREY),
+            Some(None) => big_chip(ui, "TOLERANCE NOT VALID", GREY),
         }
     } else {
         big_chip(ui, "NO VERDICT", GREY);
@@ -912,5 +938,36 @@ impl eframe::App for App {
 
     fn on_exit(&mut self) {
         let _ = self.cmds.send(Cmd::Quit);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tolerance_off_never_logs_pass_or_fail() {
+        let spec = Spec::new(0.5, 0.0005, 0.0005);
+        // a 6 mm pin against the 0.5 in default would FAIL if the tolerance were applied
+        assert_eq!(
+            diameter_log_verdict(true, None, 0.2363, 0.0),
+            "NO TOLERANCE"
+        );
+        assert_eq!(diameter_log_verdict(true, Some(spec), 0.2363, 0.0), "FAIL");
+        assert_eq!(diameter_log_verdict(true, Some(spec), 0.5001, 0.0), "PASS");
+    }
+
+    #[test]
+    fn untrusted_or_invalid_tolerance_is_no_verdict() {
+        let spec = Spec::new(0.5, 0.0005, 0.0005);
+        assert_eq!(diameter_log_verdict(false, None, 0.5, 0.0), "NO VERDICT");
+        assert_eq!(
+            diameter_log_verdict(false, Some(spec), 0.5, 0.0),
+            "NO VERDICT"
+        );
+        assert_eq!(
+            diameter_log_verdict(true, Some(None), 0.5, 0.0),
+            "NO VERDICT"
+        );
     }
 }

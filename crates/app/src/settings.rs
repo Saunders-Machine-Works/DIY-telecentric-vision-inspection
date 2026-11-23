@@ -13,6 +13,8 @@ pub struct Settings {
     pub guard_in: f64,
     pub thread_size: String,
     pub thread_mode: bool,
+    /// Judge diameters against the tolerance (off: show the reading only).
+    pub apply_tolerance: bool,
 }
 
 impl Default for Settings {
@@ -27,6 +29,7 @@ impl Default for Settings {
             guard_in: 0.0,
             thread_size: "1/2-13".into(),
             thread_mode: false,
+            apply_tolerance: false,
         }
     }
 }
@@ -34,7 +37,7 @@ impl Default for Settings {
 impl Settings {
     pub fn to_text(&self) -> String {
         format!(
-            "cal={}\nrows={} {}\ncols={} {}\nnominal={:?}\nplus={:?}\nminus={:?}\nguard={:?}\nsize={}\nthread_mode={}\n",
+            "cal={}\nrows={} {}\ncols={} {}\nnominal={:?}\nplus={:?}\nminus={:?}\nguard={:?}\nsize={}\nthread_mode={}\ntolerance={}\n",
             self.cal_path,
             self.rows.0,
             self.rows.1,
@@ -45,7 +48,8 @@ impl Settings {
             self.minus_in,
             self.guard_in,
             self.thread_size,
-            self.thread_mode
+            self.thread_mode,
+            self.apply_tolerance
         )
     }
 
@@ -74,6 +78,7 @@ impl Settings {
                 "guard" => s.guard_in = num(v).filter(|x| *x >= 0.0).unwrap_or(s.guard_in),
                 "size" if !v.trim().is_empty() => s.thread_size = v.trim().to_string(),
                 "thread_mode" => s.thread_mode = v.trim() == "true",
+                "tolerance" => s.apply_tolerance = v.trim() == "true",
                 _ => {}
             }
         }
@@ -97,6 +102,7 @@ mod tests {
             guard_in: 0.0001,
             thread_size: "#10-24".into(),
             thread_mode: true,
+            apply_tolerance: true,
         };
         assert_eq!(Settings::from_text(&s.to_text()), s);
     }
@@ -117,5 +123,14 @@ mod tests {
         assert_eq!(s.plus_in, 0.001);
         assert_eq!(s.rows, Settings::default().rows);
         assert!(s.thread_mode);
+    }
+
+    #[test]
+    fn tolerance_is_off_unless_saved_on() {
+        assert!(!Settings::default().apply_tolerance);
+        // files saved before the setting existed keep it off
+        assert!(!Settings::from_text("nominal=0.25\n").apply_tolerance);
+        assert!(Settings::from_text("tolerance=true\n").apply_tolerance);
+        assert!(!Settings::from_text("tolerance=yes\n").apply_tolerance);
     }
 }
