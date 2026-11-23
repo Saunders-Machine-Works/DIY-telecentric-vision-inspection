@@ -1,0 +1,7 @@
+# macOS: pylon.framework's install name is @rpath/..., so every binary (app, tests,
+# examples) needs an rpath to the framework's folder. See crates/camera/build.rs.
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-arg=-Wl,-rpath,/Library/Frameworks"]
+
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "link-arg=-Wl,-rpath,/Library/Frameworks"]

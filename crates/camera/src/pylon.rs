@@ -17,7 +17,8 @@ const PIXEL_TYPE_MONO8: i32 = 0x0108_0001;
 const GRAB_STATUS_GRABBED: i32 = 2;
 const ACCESS_MODE_CONTROL_STREAM: i32 = 1 | 2;
 const DEVICE_INFO_STR_LEN: usize = 64;
-const FILENAME_MAX: usize = 260; // MSVC value; this binding is Windows-only
+// MSVC value. On macOS the shim (shim/pylon_c_shim.cpp) defines the struct with the same 260.
+const FILENAME_MAX: usize = 260;
 const NUM_BUFFERS: usize = 8;
 const DEFAULT_TIMEOUT_MS: u32 = 1000;
 const OPEN_ATTEMPTS: u32 = 10;
@@ -60,12 +61,12 @@ struct PylonGrabResult {
     block_id: u64,
 }
 
-// Layout guards against PylonC.h (pylon 7, x64).
+// Layout guards against PylonC.h (pylon 7, x64) and the macOS shim's static_asserts.
 const _: () = assert!(std::mem::size_of::<PylonGrabResult>() == 96);
 const _: () =
     assert!(std::mem::size_of::<PylonDeviceInfo>() == FILENAME_MAX + 7 * DEVICE_INFO_STR_LEN);
 
-#[link(name = "PylonC_v8_0")]
+// build.rs links PylonC_v8_0 on Windows and the C++ shim + pylon.framework on macOS.
 extern "system" {
     fn PylonInitialize() -> GenApiResult;
     fn PylonEnumerateDevices(num: *mut usize) -> GenApiResult;
