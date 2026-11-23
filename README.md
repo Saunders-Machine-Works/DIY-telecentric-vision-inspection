@@ -174,9 +174,12 @@ point it at another file in the inspector.
 ```
 
 The script adds the pylon runtime to `PATH`, builds the release app and starts it. On macOS run
-`./run_app.sh` instead. For a double-clickable launcher with an icon, run
-`tools/mac/make_launcher.sh` once; it puts **Thread Vision.app** in `~/Applications` (drag it to
-the Dock). It starts the release build in this folder, so rebuild with `./run_app.sh` after pulling.
+`./run_app.sh` instead: it builds the app, puts it in **/Applications/Thread Vision.app** (with
+an icon; drag it to the Dock) and opens it. After that, start it from Applications; run
+`./run_app.sh` again after pulling new code. The first launch asks to **find devices on your local
+network**: click Allow, or the camera cannot be opened ("Failed to download the XML configuration
+file"). macOS may ask again after a rebuild. Running `target/release/app` directly from a terminal
+only works if that terminal app has Local Network access.
 
 - **Connect**, then **Live** to see the camera. Drag to draw the scan window around the part;
   right-drag (or middle-drag) pans and scroll zooms.

@@ -207,7 +207,13 @@ Setup: reticle calibration 30.1346 um/px (re-fit live later: 30.142). Reticle ce
 - 199 tests, clippy -D warnings, fmt pass on macOS.
 - App changes the same day: left-drag draws the scan window (right/middle-drag pans); "Apply tolerance" checkbox in
   Diameter mode, off by default and saved (off: reading only, CSV verdict NO TOLERANCE). Launcher:
-  `tools/mac/make_launcher.sh` builds ~/Applications/Thread Vision.app.
+  `tools/mac/make_launcher.sh` builds /Applications/Thread Vision.app.
+- macOS Local Network privacy: launched from Finder, the camera was found but open failed ("Failed to download the XML
+  configuration file", 0xe1020041) because the GVCP traffic was blocked silently. Terminal has no Local Network access
+  either; commands only worked from VS Code's terminal. A shell-script bundle never got a prompt. Fix: the real app
+  binary is copied into the bundle (ad-hoc signed, NSLocalNetworkUsageDescription), which macOS prompts for once;
+  LSEnvironment THREAD_VISION_DATA points the app at the repo for captures/ (`main.rs::working_root`, tested).
+  `run_app.sh` now builds, refreshes the bundle and opens it.
 - Mac check, 6 mm pin (rows 900-1250, old map): 0.23630 in = 6.0020 mm (+0.00008 in vs nominal), sd < 0.00001 in over
   4 bursts. Certified size not given. Release app launches with no stderr.
 - Calibration: the old PC map copied by hand to `captures/calibration.txt` (and `calibration_oldpc.txt`).

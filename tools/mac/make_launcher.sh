@@ -1,13 +1,18 @@
 #!/bin/sh
-# Build "Thread Vision.app", a double-clickable macOS launcher for the release app in this
-# repository, with its own icon. Usage, from anywhere:
-#   tools/mac/make_launcher.sh [destination folder]      (default: ~/Applications)
-# The launcher starts target/release/app from this repo, so the app finds captures/ and
-# writes measurements.csv here. Rebuild the app with ./run_app.sh or cargo after pulling;
-# re-run this script only if the repository moves. Needs python3 with Pillow for the icon.
+# Build "Thread Vision.app" in /Applications (or the folder given) from this repository's
+# release build, with its own icon. ./run_app.sh calls this after every build, so the bundle
+# always holds the current app. Usage: tools/mac/make_launcher.sh [destination folder]
+#
+# The real app binary is copied INTO the bundle: macOS Local Network privacy (needed to reach
+# the GigE camera) is granted per app, and it only asks for, and remembers, a proper bundle
+# whose own executable makes the connection. A script that runs the repo binary is blocked
+# silently, with no prompt. Allow the prompt on first launch, or later in System Settings >
+# Privacy & Security > Local Network. THREAD_VISION_DATA (LSEnvironment) points the app at
+# this repo, so it still reads captures/calibration.txt and writes measurements.csv here.
+# Needs python3 with Pillow for the icon.
 set -e
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
-DEST="${1:-$HOME/Applications}"
+DEST="${1:-/Applications}"
 APP="$DEST/Thread Vision.app"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -23,24 +28,22 @@ cat > "$APP/Contents/Info.plist" <<EOF
   <key>CFBundleName</key><string>Thread Vision</string>
   <key>CFBundleDisplayName</key><string>Thread Vision</string>
   <key>CFBundleIdentifier</key><string>local.threadvision.launcher</string>
-  <key>CFBundleExecutable</key><string>launch</string>
+  <key>CFBundleExecutable</key><string>ThreadVision</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>0.1</string>
   <key>NSHighResolutionCapable</key><true/>
+  <key>LSEnvironment</key><dict><key>THREAD_VISION_DATA</key><string>$REPO</string></dict>
+  <key>NSLocalNetworkUsageDescription</key><string>Thread Vision talks to the Basler GigE camera on the local network.</string>
 </dict></plist>
 EOF
 
-cat > "$APP/Contents/MacOS/launch" <<EOF
-#!/bin/sh
 BIN="$REPO/target/release/app"
-if [ ! -x "\$BIN" ]; then
-  osascript -e 'display alert "Thread Vision is not built" message "Run ./run_app.sh once in $REPO, then try again."'
+if [ ! -x "$BIN" ]; then
+  echo "No release build at $BIN: run ./run_app.sh (or cargo build --release -p app) first." >&2
   exit 1
 fi
-exec "\$BIN"
-EOF
-chmod +x "$APP/Contents/MacOS/launch"
+cp "$BIN" "$APP/Contents/MacOS/ThreadVision"
 
 # Icon: a backlit pin silhouette between two edge marks, drawn at 1024 px.
 python3 - "$TMP/icon.png" <<'EOF'
@@ -65,5 +68,7 @@ for s in 16 32 128 256 512; do
   sips -z $d $d "$TMP/icon.png" --out "$SET/icon_${s}x${s}@2x.png" >/dev/null
 done
 iconutil -c icns "$SET" -o "$APP/Contents/Resources/AppIcon.icns"
+# Ad-hoc signature, so the bundle has an identity for its privacy permission.
+codesign --force --sign - "$APP"
 touch "$APP"
 echo "Built $APP"

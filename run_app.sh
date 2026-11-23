@@ -1,9 +1,10 @@
 #!/bin/sh
-# Start Thread Vision on macOS. Run from the repository root:
-#   ./run_app.sh
-# (builds the release app first if needed). pylon for macOS must be installed in
-# /Library/Frameworks; the rpath to it comes from .cargo/config.toml.
+# Build and start Thread Vision on macOS. Run from anywhere:  ./run_app.sh
+# Rebuilds the release app, refreshes /Applications/Thread Vision.app from it and opens that.
+# The app must run from its bundle: macOS only grants the bundle Local Network access to the
+# GigE camera (see tools/mac/make_launcher.sh). pylon for macOS must be in /Library/Frameworks.
 set -e
 cd "$(dirname "$0")"
 cargo build --release -p app
-exec ./target/release/app
+tools/mac/make_launcher.sh
+open "/Applications/Thread Vision.app"
